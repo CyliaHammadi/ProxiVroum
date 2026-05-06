@@ -1,0 +1,43 @@
+1. Identification des Bounded Contexts (DDD)
+Pour structurer l'application selon une approche Domain-Driven Design (DDD), nous divisons le système en contextes autonomes possédant leur propre logique métier :
+
+Context de Gestion des Utilisateurs (Identity & Access) : Gère l'authentification, les profils (conducteur/passager) et la conformité RGPD (droit à l'oubli, accès aux données).
+
+Context de Covoiturage (Carpooling) : Le cœur du métier. Gère la publication des trajets, la recherche géographique et la gestion des places disponibles.
+
+Context de Réservation (Booking) : Gère le cycle de vie d'une réservation (demande, acceptation, annulation) et le lien avec le paiement.
+
+Context de Paiement (Payment) : Isolé pour garantir la conformité PCI-DSS. Il communique avec les prestataires bancaires externes.
+
+Context de Support & Litiges (Trust & Safety) : Gère le système de notation après trajet et les interventions des modérateurs en cas de conflit.
+
+2. Diagramme de composants (Clean Architecture)
+Pour le service central, nous appliquons les principes de la Clean Architecture (ou Architecture Hexagonale) afin de séparer la logique métier des détails techniques.
+
+Structure du composant central :
+Couche Infrastructure (Externe) :
+
+Controllers API : Points d'entrée REST pour les applications mobiles.
+
+Persistence (Adapteurs) : Implémentation de l'accès aux données (PostgreSQL/MongoDB).
+
+External Services : Client pour l'API de paiement (PCI-DSS) et services d'export comptable.
+
+Couche Application (Cas d'utilisation) :
+
+Use Cases : PublierTrajet, ReserverPlace, TraiterLitige, ExporterDonneesComptables.
+
+Cette couche orchestre les flux de données vers et depuis les entités.
+
+Couche Domaine (Noyau Central) :
+
+Entities : Les objets métier (Trajet, Utilisateur, Réservation) avec leurs règles critiques.
+
+Interfaces (Ports) : Définition des contrats que l'infrastructure doit remplir (ex: ITrajetRepository).
+
+3. Justification des choix technologiques
+Clean Architecture : Permet de tester la logique métier sans base de données et facilite l'évolution (ex: changer de prestataire de paiement sans toucher au code de réservation).
+
+Isolation du Paiement : Indispensable pour limiter le périmètre d'audit PCI-DSS. Seul ce composant manipule les données sensibles de carte bancaire.
+
+Scalabilité : L'architecture par composants permet de répondre aux pics de charge (vendredi et dimanche soir) en mettant à l'échelle spécifiquement le service de recherche et de réservation.
